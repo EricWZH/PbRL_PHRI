@@ -57,7 +57,7 @@ class ShowEpisodeRewardCallback(BaseCallback):
         mean_episode_pref_reward = sum_episode_pref_reward / len(monitor_logs_path_list)
         print('current total return: %.3f, robot return: %.3f, pref return: %.3f' % (mean_episode_total_reward, mean_episode_robot_reward, mean_episode_pref_reward))
         '''
-        print('current timesteps: [%d / 16000000]' %self.model.num_timesteps)
+        print('current timesteps: [%d / 8000000]' %self.model.num_timesteps)
         if self.num_timesteps != 0 and self.num_timesteps % 1600000 == 0:
             print("-------------------------saving model--------------------------")
             if not os.path.exists(os.path.join(self.model.tensorboard_log, 'model')):

@@ -55,7 +55,7 @@ if __name__ == "__main__":
     parser.add_argument("--n-envs", help="# of parallel environments", type=int, default=10)
     parser.add_argument("--n-steps", help="# of steps to run for each environment per update", type=int, default=200)
     parser.add_argument("--lr", help="learning rate", type=float, default=3e-4)
-    parser.add_argument("--total-timesteps", help="total timesteps", type=int, default=16000000)
+    parser.add_argument("--total-timesteps", help="total timesteps", type=int, default=8000000)
     parser.add_argument("-b", "--batch-size", help="batch size", type=int, default=256)
     parser.add_argument("--ent-coef", help="coeff for entropy", type=float, default=0.0)
     parser.add_argument("--hidden-dim", help="dim of hidden features", type=int, default=512)

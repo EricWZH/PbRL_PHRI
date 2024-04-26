@@ -68,7 +68,7 @@ if __name__ == "__main__":
     parser.add_argument("--gamma", help="discount factor", type=float, default=0.99)
     parser.add_argument("--train-freq", help="Update the model every train_freq steps", type=int, default=200)
     parser.add_argument("--gradient-steps", help="How many gradient steps to do after each rollout", type=int, default=10)
-    parser.add_argument("--total-timesteps", help="total timesteps", type=int, default=16000000)
+    parser.add_argument("--total-timesteps", help="total timesteps", type=int, default=8000000)
     parser.add_argument("-b", "--batch-size", help="batch size", type=int, default=512)
     parser.add_argument("--ent-coef", help="Entropy regularization coefficient", default='auto_0.1')
     parser.add_argument("--target-entropy", help="target entropy when learning ent_coef", default='auto')

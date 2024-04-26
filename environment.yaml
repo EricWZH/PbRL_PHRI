@@ -112,7 +112,7 @@ dependencies:
     - networkx==2.5.1
     - ninja==1.10.2.3
     - numpngw==0.1.0
-    - numpy==1.16.4
+    - numpy==1.19.2
     - numpydoc==1.1.0
     - oauthlib==3.2.0
     - omegaconf==1.4.0

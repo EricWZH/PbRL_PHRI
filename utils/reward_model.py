@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+Created on Sun Dec 11 20:30 2021
+
+@author: eric
+
 train a reward model based on preference
 """
 
@@ -148,6 +152,8 @@ class RewardModel:
         self.buffer_seg1 = np.empty((self.capacity, size_segment, self.ds + self.da), dtype=np.float32)
         self.buffer_seg2 = np.empty((self.capacity, size_segment, self.ds + self.da), dtype=np.float32)
         self.buffer_label = np.empty((self.capacity, 1), dtype=np.float32)
+        self.buffer_r1 = np.empty((self.capacity, size_segment, 1), dtype=np.float32)
+        self.buffer_r2 = np.empty((self.capacity, size_segment, 1), dtype=np.float32)
         self.buffer_index = 0
         self.buffer_full = False
 
@@ -417,7 +423,7 @@ class RewardModel:
 
         return sa_t_1, sa_t_2, r_t_1, r_t_2
 
-    def put_queries(self, sa_t_1, sa_t_2, labels):
+    def put_queries(self, sa_t_1, sa_t_2, labels, r_t_1, r_t_2):
         '''
         # put query resutls to self.buffer_seg and self.buffer_label
         total_sample = sa_t_1.shape[0]
@@ -446,40 +452,51 @@ class RewardModel:
         next_index = self.buffer_index + total_sample
         if self.buffer_full:
             # drop the easy sample
-            top_difficult_index = self.get_rank_difficulty(self.buffer_seg1, self.buffer_seg2)[:total_sample]
-            np.copyto(self.buffer_seg1[top_difficult_index], sa_t_1[:])
-            np.copyto(self.buffer_seg2[top_difficult_index], sa_t_2[:])
-            np.copyto(self.buffer_label[top_difficult_index], labels[:])
+            top_difficult_index = self.get_rank_difficulty(self.buffer_seg1, self.buffer_seg2, self.buffer_r1,
+                                                           self.buffer_r2)[:total_sample]
+            np.copyto(self.buffer_seg1[top_difficult_index], sa_t_1)
+            np.copyto(self.buffer_seg2[top_difficult_index], sa_t_2)
+            np.copyto(self.buffer_label[top_difficult_index], labels)
+            np.copyto(self.buffer_r1[top_difficult_index], r_t_1)
+            np.copyto(self.buffer_r2[top_difficult_index], r_t_2)
         elif next_index >= self.capacity:
             self.buffer_full = True
             maximum_index = self.capacity - self.buffer_index
             np.copyto(self.buffer_seg1[self.buffer_index:self.capacity], sa_t_1[:maximum_index])
             np.copyto(self.buffer_seg2[self.buffer_index:self.capacity], sa_t_2[:maximum_index])
             np.copyto(self.buffer_label[self.buffer_index:self.capacity], labels[:maximum_index])
+            np.copyto(self.buffer_r1[self.buffer_index:self.capacity], r_t_1[:maximum_index])
+            np.copyto(self.buffer_r2[self.buffer_index:self.capacity], r_t_2[:maximum_index])
 
             remain = total_sample - (maximum_index)
             if remain > 0:
                 np.copyto(self.buffer_seg1[0:remain], sa_t_1[maximum_index:])
                 np.copyto(self.buffer_seg2[0:remain], sa_t_2[maximum_index:])
                 np.copyto(self.buffer_label[0:remain], labels[maximum_index:])
+                np.copyto(self.buffer_r1[0:remain], r_t_1[maximum_index:])
+                np.copyto(self.buffer_r2[0:remain], r_t_2[maximum_index:])
 
             self.buffer_index = remain
         else:
             np.copyto(self.buffer_seg1[self.buffer_index:next_index], sa_t_1)
             np.copyto(self.buffer_seg2[self.buffer_index:next_index], sa_t_2)
             np.copyto(self.buffer_label[self.buffer_index:next_index], labels)
+            np.copyto(self.buffer_r1[self.buffer_index:next_index], r_t_1)
+            np.copyto(self.buffer_r2[self.buffer_index:next_index], r_t_2)
             self.buffer_index = next_index
 
-    def get_rank_difficulty(self, x_1, x_2):
+    def get_rank_difficulty(self, x_1, x_2, r_1, r_2):
 
         difficulty = []
-        print(x_1.shape[1])
-        for i in range(len(x_1)):
-            #s_1, s_2 = x_1[i,:,:25].reshape(-1), x_2[i,:,:25].reshape(-1)
-            s_1, s_2 = x_1[i, x_1.shape[1] // 4:-x_1.shape[1] // 4, :].reshape(-1), x_2[i, x_2.shape[1] // 4:-x_2.shape[1] // 4, :].reshape(-1)
-            difficulty.append(-sum((s_1 - s_2)**2))
+        T = r_1.shape[1]
+        sum_r_1 = np.sum(r_1[:, T // 4:T // 4 * 3], axis=1)
+        sum_r_2 = np.sum(r_2[:, T // 4:T // 4 * 3], axis=1)
 
-        return np.array(difficulty).argsort()
+        for i in range(x_1.shape[0]):
+            diff = abs(sum_r_1[i] - sum_r_2[i])
+            difficulty.append(-diff)
+
+        return np.array(difficulty).flatten().argsort()
 
     def get_label(self, sa_t_1, sa_t_2, r_t_1, r_t_2):
         # simulation human teacher
@@ -545,7 +562,7 @@ class RewardModel:
         sa_t_1, sa_t_2, r_t_1, r_t_2, labels = self.get_label(sa_t_1, sa_t_2, r_t_1, r_t_2)
 
         if len(labels) > 0:
-            self.put_queries(sa_t_1, sa_t_2, labels)
+            self.put_queries(sa_t_1, sa_t_2, labels, r_t_1, r_t_2)
 
         return len(labels)
 
@@ -568,7 +585,7 @@ class RewardModel:
         # get labels
         sa_t_1, sa_t_2, r_t_1, r_t_2, labels = self.get_label(sa_t_1, sa_t_2, r_t_1, r_t_2)
         if len(labels) > 0:
-            self.put_queries(sa_t_1, sa_t_2, labels)
+            self.put_queries(sa_t_1, sa_t_2, labels, r_t_1, r_t_2)
 
         return len(labels)
 
