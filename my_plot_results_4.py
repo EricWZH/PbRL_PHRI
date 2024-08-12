@@ -174,7 +174,7 @@ if __name__ == '__main__':
                        mean_task_success_array, std_task_success_array,
                        color[i], labels[i])
 
-        fig.legend(loc='upper left', bbox_to_anchor=(1, 0.9), borderaxespad=0)
+        fig.legend(fontsize='x-large',loc='upper center', bbox_to_anchor=(0.5, 1.13), borderaxespad=0, ncol=6)
         plt.tight_layout()
         plt.savefig('on_policy.png', bbox_inches='tight')
         plt.show()
@@ -219,7 +219,7 @@ if __name__ == '__main__':
                        mean_task_success_array, std_task_success_array,
                        color[i], labels[i])
 
-        fig.legend(loc='upper left', bbox_to_anchor=(1, 0.9), borderaxespad=0)
+        fig.legend(fontsize='x-large',loc='upper center', bbox_to_anchor=(0.5, 1.13), borderaxespad=0, ncol=6)
         plt.tight_layout()
         plt.savefig('off_policy.png', bbox_inches='tight')
         plt.show()
